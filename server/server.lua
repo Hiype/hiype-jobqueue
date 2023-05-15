@@ -1,5 +1,7 @@
 QBCore = exports['qb-core']:GetCoreObject()
 
+local loggingEnabled = Config.DebugLogs
+
 local queue = {}
 
 local function IsPlayerInQueue(pSource)
@@ -17,16 +19,21 @@ local function DropFromQueue(pSource)
             if v.players[i] == pSource then
                 if not v.subJobs then
                     table.remove(v.players, i)
-                    print("Removed player " .. tostring(pSource) .. " from job " .. tostring(k))
+
+                    if loggingEnabled then
+                        print("Removed player " .. tostring(pSource) .. " from job " .. tostring(k))
+                    end
                 else
                     table.remove(v.players, i)
-                    print("Removed player " .. tostring(pSource) .. " from job " .. tostring(k))
 
                     for subK,subV in pairs(v.subJobs) do
                         for subI=1, #subV.players do
                             if subV.players[i] == pSource then
                                 table.remove(subV.players, subI)
-                                print("Removed player " .. tostring(pSource) .. " from subjob " .. tostring(subK))
+
+                                if loggingEnabled then
+                                    print("Removed player " .. tostring(pSource) .. " from subjob " .. tostring(subK) .. " in job " .. tostring(k))
+                                end
                             end
                         end
                     end
@@ -63,10 +70,6 @@ local function AddToSubJob(pSource, pSubJobsQueue, pJobName, pSubJobNum)
         local subJobKey = freeSubJobs[subJobIndex]
         local subJob = queue[pJobName].subJobs[subJobKey]
 
-        tPrint(freeSubJobs)
-        print(subJobIndex)
-        print(tostring(subJob))
-
         subJob.players[#subJob.players + 1] = pSource
 
         return subJobKey
@@ -76,21 +79,25 @@ local function AddToSubJob(pSource, pSubJobsQueue, pJobName, pSubJobNum)
 end
 
 local function AssignJob(pJobName, pSubJobs, pSource)
-
     if #queue[pJobName].players < 1 then
         print("Unable to assign job: No players in job queue")
         return
     end
 
     for k,v in pairs(pSubJobs) do
-        tPrint(v)
         if v.players[1] == pSource then
-            print("Sending job to client")
+            if loggingEnabled then
+                print("Sending job to client params: " .. tostring(pSource) .. " " .. tostring(pJobName) .. " " .. tostring(k))
+            end
+
             TriggerClientEvent('hiype-jobqueue:client:receive-job', pSource, pJobName, k)
             return
         end
     end
-    print("Error assigning job: Something went wrong")
+
+    if loggingEnabled then
+        print("Error assigning job: Something went wrong")
+    end
 end
 
 -- ADD JOB
@@ -180,10 +187,6 @@ QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(sour
         print("Player " .. tostring(src) .. " joined queue for job " .. pJobName)
         if subJobsQueue then
             local subJobKey = AddToSubJob(src, subJobsQueue, pJobName, pSubJobNum)
-
-            print("Current queue: ")
-            tPrint(queue, 3)
-
             if subJobKey then
                 print("Player " .. tostring(src) .. " joined queue for sub job " .. subJobKey)
                 cb(subJobKey)
@@ -193,8 +196,6 @@ QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(sour
             end
         else
             cb(1)
-            print("Current queue: ")
-            tPrint(queue, 3)
         end
     else
         print("Unable to join queue: " .. pJobName .. " is full")
@@ -204,11 +205,12 @@ end)
 
 CreateThread(function()
     while true do
-        local Players = QBCore.Functions.GetQBPlayers()
-        
-        for i,v in ipairs(Players) do
-            if not v.PlayerData.LoggedIn then
-                DropFromQueue(v.PlayerData.source)
+        for k,v in pairs(queue) do
+            for i=1, #v.players do
+                local player = v.players[i]
+                if QBCore.Functions.GetPlayer(player) == nil then
+                    DropFromQueue(player)
+                end
             end
         end
 
@@ -222,9 +224,12 @@ CreateThread(function()
     while true do
         for k,v in pairs(queue) do
             if v.timer >= reducedTime then
+                if loggingEnabled then
+                    print("Reducing: " .. tostring(v.timer) .. " >= " .. tostring(reducedTime))
+                end
+
                 v.timer = v.timer - reducedTime
             else
-                print("Assigning job next step")
                 AssignJob(k, v.subJobs, v.players[1])
                 table.remove(v.players, 1)
                 v.timer = v.cooldown

@@ -1,6 +1,8 @@
 # <b>Job queue system for QBCore</b>
 
-Simple custom made queue system for and upcoming project jobs.
+Simple custom made queue system for an upcoming project of mine but could also be used in any other job scripts too.<br>
+This script is an early version so if you have any suggestions, fixes or issues - please post them in the Issues section or contribute using pull requests.<br>
+Thank you in advance! :)
 
 <br>
 

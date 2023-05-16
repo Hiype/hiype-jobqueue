@@ -37,9 +37,14 @@ end
 ## <b>Adding sub job</b>
 <br>
 
-### Single sub job
+### Single sub job (Server-side) <i>Recommended</i>
 ```lua
 TriggerEvent('hiype-jobqueue:server:add-subjob', pJobName, pSubJobName, pWaitTime)
+```
+
+### Single sub job (Client-side)
+```lua
+TriggerServerEvent('hiype-jobqueue:server:add-subjob', pJobName, pSubJobName, pWaitTime)
 ```
 
 ### Multiple sub jobs
@@ -57,13 +62,13 @@ end
 <hr>
 <br>
 
-## <b>Adding job with sub jobs</b>
+## <b>Adding jobs with sub jobs</b>
 ### Example
-```Lua
-for k,v in pairs(pJobArray) do
+```lua
+for k,_ in pairs(pJobArray) do
     TriggerEvent('hiype-jobqueue:server:add-job', k, pMaxQueueSize, pWaitTime)
 
-    for subK, subV in pairs(Config.TrashLocations) do
+    for _, subV in pairs(pSubJobArray) do
         TriggerEvent('hiype-jobqueue:server:add-subjob', k, subV.name, pMaxQueueSize2)
     end
 end
@@ -91,3 +96,21 @@ end, pJobName)
 ```lua
 TriggerServerEvent('hiype-jobqueue:server:leave-queue')
 ```
+
+<br>
+<hr>
+<br>
+
+## <b>Configurations</b>
+<b>Config.QueueCheckRate</b> <i>(unsigned int = msec)</i> - How often to check in msec if a player that is in queue has gone offline to remove the player<br>
+<b>Config.JobAssignerRate</b> <i>(unsigned int = msec)</i> - Amount timer time is reduced by in msec (also used in Wait time)<br>
+<b>Config.DebugLogs</b> <i>(boolean)</i> - Enables some logging for the queue system<br>
+<b>Config.EnableQueuePrintCommand</b> <i>(boolean)</i> - Enables registration of a command for players to print queue in server logs<br>
+<b>Config.CommandPermissionLevel</b> <i>(String)</i> - Level of permission required to use the command if enabled
+
+<br>
+<hr>
+<br>
+
+## <b>Commands</b>
+<b>/queue</b> - Prints queue contents in server logs if enabled in config file

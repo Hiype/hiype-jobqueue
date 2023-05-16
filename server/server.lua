@@ -147,10 +147,6 @@ RegisterNetEvent('hiype-jobqueue:server:leave-queue', function()
     DropFromQueue(source)
 end)
 
-RegisterNetEvent('hiype-jobqueue:server:print-queue', function()
-    tPrint(queue)
-end)
-
 -- JOIN QUEUE
 QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(source, cb, pJobName, pSubJobNum)
     local src = source
@@ -202,6 +198,12 @@ QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(sour
         cb(-1)
     end
 end)
+
+if Config.EnableQueuePrintCommand then
+    QBCore.Commands.Add('queue', 'Prints queue content in server logs', {}, false, function(source, args)
+        tPrint(queue)
+    end, Config.CommandPermissionLevel)
+end
 
 CreateThread(function()
     while true do

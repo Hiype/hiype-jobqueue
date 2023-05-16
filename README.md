@@ -7,7 +7,6 @@ Thank you in advance! :)
 <br>
 
 ## <b>Adding job</b>
-<br>
 
 ### Single job (Server-side) <i>Recommended</i>
 ```lua
@@ -32,9 +31,7 @@ end
 <b>pMaxQueueSize</b> <i>(Unsigned integer > 0)</i> - Amount of players allowed to be in queue<br>
 <b>pWaitTime</b> <i>(unsigned integer)</i> - Time before next player gets assigned a job in the queue
 
-<br>
 <hr>
-<br>
 
 ## <b>Adding sub job</b>
 <br>
@@ -60,9 +57,7 @@ end
 <b>pJobName</b> <i>(String)</i> - Name of the job that you wish to add the sub job to<br>
 <b>pWaitTime</b> <i>(unsigned integer)</i> - Time before next player gets assigned a job in the queue
 
-<br>
 <hr>
-<br>
 
 ## <b>Adding jobs with sub jobs</b>
 ### Example
@@ -76,9 +71,7 @@ for k,_ in pairs(pJobArray) do
 end
 ```
 
-<br>
 <hr>
-<br>
 
 ## <b>Join queue</b>
 ```lua
@@ -90,18 +83,14 @@ end, pJobName)
 ### Parameters
 <b>pJobName</b> <i>(String)</i> - Name of the job that you wish to join queue to<br>
 
-<br>
 <hr>
-<br>
 
 ## <b>Leave queue</b>
 ```lua
 TriggerServerEvent('hiype-jobqueue:server:leave-queue')
 ```
 
-<br>
 <hr>
-<br>
 
 ## <b>Configurations</b>
 <b>Config.QueueCheckRate</b> <i>(unsigned int = msec)</i> - How often to check in msec if a player that is in queue has gone offline to remove the player<br>
@@ -110,9 +99,7 @@ TriggerServerEvent('hiype-jobqueue:server:leave-queue')
 <b>Config.EnableQueuePrintCommand</b> <i>(boolean)</i> - Enables registration of a command for players to print queue in server logs<br>
 <b>Config.CommandPermissionLevel</b> <i>(String)</i> - Level of permission required to use the command if enabled
 
-<br>
 <hr>
-<br>
 
 ## <b>Commands</b>
 <b>/queue</b> - Prints queue contents in server logs if enabled in config file

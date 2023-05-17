@@ -91,6 +91,7 @@ local function AssignJob(pJobName, pSubJobs, pSource)
             end
 
             TriggerClientEvent('hiype-jobqueue:client:receive-job', pSource, pJobName, k)
+            DropFromQueue(pSource)
             return
         end
     end
@@ -188,6 +189,7 @@ QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(sour
                 cb(subJobKey)
             else
                 print("Unable to join queue:" .. pJobName .. " all subjobs were full")
+                
                 cb(-2)
             end
         else
@@ -226,9 +228,9 @@ CreateThread(function()
     while true do
         for k,v in pairs(queue) do
             if v.timer >= reducedTime then
-                if loggingEnabled then
-                    print("Reducing: " .. tostring(v.timer) .. " >= " .. tostring(reducedTime))
-                end
+                -- if loggingEnabled then
+                --     print("Reducing: " .. tostring(v.timer) .. " >= " .. tostring(reducedTime))
+                -- end
 
                 v.timer = v.timer - reducedTime
             else

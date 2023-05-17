@@ -34,7 +34,6 @@ end
 <hr>
 
 ## <b>Adding sub job</b>
-<br>
 
 ### Single sub job (Server-side) <i>Recommended</i>
 ```lua

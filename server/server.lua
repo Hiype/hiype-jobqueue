@@ -55,8 +55,19 @@ local function GetFreeSubJobs(pSubJobsQueue)
     return freeSubJobs
 end
 
-local function AddToSubJob(pSource, pSubJobsQueue, pJobName, pSubJobNum)
+local function AddToSubJob(pSource, pSubJobsQueue, pJobName, pSubJobNum, pPreviousSubJob)
     local freeSubJobs = GetFreeSubJobs(pSubJobsQueue)
+
+    if pPreviousSubJob ~= nil then
+        if #freeSubJobs > 1 then
+            for i=1, #freeSubJobs do
+                if freeSubJobs[i] == pPreviousSubJob then
+                    table.remove(freeSubJobs, i)
+                    break
+                end
+            end
+        end
+    end
 
     if #freeSubJobs > 0 then
         local subJobIndex
@@ -80,7 +91,7 @@ end
 
 local function AssignJob(pJobName, pSubJobs, pSource)
     if #queue[pJobName].players < 1 then
-        print("Unable to assign job: No players in job queue")
+        if loggingEnabled then print("Unable to assign job: No players in job queue") end
         return
     end
 
@@ -97,14 +108,14 @@ local function AssignJob(pJobName, pSubJobs, pSource)
     end
 
     if loggingEnabled then
-        print("Error assigning job: Something went wrong")
+        if loggingEnabled then print("Error assigning job: Something went wrong") end
     end
 end
 
 -- ADD JOB
 RegisterNetEvent('hiype-jobqueue:server:add-job', function(pJobName, pQueueMaxSize, pCooldownTime)
     if queue[pJobName] then
-        print("Unable to add job: Job " .. pJobName ..  " already exists")
+        if loggingEnabled then print("Unable to add job: Job " .. pJobName ..  " already exists") end
         return
     end
 
@@ -119,7 +130,7 @@ end)
 -- ADD SUB JOB
 RegisterNetEvent('hiype-jobqueue:server:add-subjob', function(pJobName, pSubJobName, pQueueMaxSize)
     if not queue[pJobName] then
-        print("Unable to add sub job: Job " .. pJobName ..  " doesnt exist")
+        if loggingEnabled then print("Unable to add sub job: Job " .. pJobName ..  " doesnt exist") end
         return
     end
 
@@ -128,7 +139,7 @@ RegisterNetEvent('hiype-jobqueue:server:add-subjob', function(pJobName, pSubJobN
     end
 
     if queue[pJobName].subJobs[pSubJobName] then
-        print("Unable to add sub job: Sub job " .. pSubJobName ..  " already exists")
+        if loggingEnabled then print("Unable to add sub job: Sub job " .. pSubJobName ..  " already exists") end
         return
     end
 
@@ -141,7 +152,7 @@ end)
 -- LEAVE QUEUE
 RegisterNetEvent('hiype-jobqueue:server:leave-queue', function()
     if CountTableElements(queue) < 1 then
-        print("Unable to leave queue: No jobs are present")
+        if loggingEnabled then print("Unable to leave queue: No jobs are present") end
         return
     end
 
@@ -149,30 +160,30 @@ RegisterNetEvent('hiype-jobqueue:server:leave-queue', function()
 end)
 
 -- JOIN QUEUE
-QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(source, cb, pJobName, pSubJobNum)
+QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(source, cb, pJobName, pSubJobNum, pPreviousSubJob)
     local src = source
     local jobQueue = queue[pJobName]
 
     if pJobName == nil then
-        print("Unable to join queue: No job name provided")
+        if loggingEnabled then print("Unable to join queue: No job name provided") end
         cb(nil)
         return
     end
 
     if CountTableElements(queue) < 1 then
-        print("Unable to join queue: No jobs are present")
+        if loggingEnabled then print("Unable to join queue: No jobs are present") end
         cb(nil)
         return
     end
 
     if not jobQueue then
-        print("Unable to join queue: No such job exists: " .. tostring(pJobName))
+        if loggingEnabled then print("Unable to join queue: No such job exists: " .. tostring(pJobName)) end
         cb(nil)
         return
     end
 
     if IsPlayerInQueue(src) then
-        print("Unable to join queue: Player is already in queue")
+        if loggingEnabled then print("Unable to join queue: Player is already in queue") end
         cb(nil)
         return
     end
@@ -180,23 +191,24 @@ QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(sour
     local subJobsQueue = jobQueue.subJobs
 
     if #jobQueue.players < jobQueue.maxSize then
-        jobQueue.players[#jobQueue.players + 1] = src
-        print("Player " .. tostring(src) .. " joined queue for job " .. pJobName)
+        if loggingEnabled then print("Player " .. tostring(src) .. " joined queue for job " .. pJobName) end
         if subJobsQueue then
-            local subJobKey = AddToSubJob(src, subJobsQueue, pJobName, pSubJobNum)
+            local subJobKey = AddToSubJob(src, subJobsQueue, pJobName, pSubJobNum, pPreviousSubJob)
             if subJobKey then
-                print("Player " .. tostring(src) .. " joined queue for sub job " .. subJobKey)
+                if loggingEnabled then print("Player " .. tostring(src) .. " joined queue for sub job " .. subJobKey) end
+                jobQueue.players[#jobQueue.players + 1] = src
                 cb(subJobKey)
             else
-                print("Unable to join queue:" .. pJobName .. " all subjobs were full")
+                if loggingEnabled then print("Unable to join queue:" .. pJobName .. " all subjobs were full") end
                 
                 cb(-2)
             end
         else
+            jobQueue.players[#jobQueue.players + 1] = src
             cb(1)
         end
     else
-        print("Unable to join queue: " .. pJobName .. " is full")
+        if loggingEnabled then print("Unable to join queue: " .. pJobName .. " is full") end
         cb(-1)
     end
 end)
@@ -227,16 +239,14 @@ CreateThread(function()
 
     while true do
         for k,v in pairs(queue) do
-            if v.timer >= reducedTime then
-                -- if loggingEnabled then
-                --     print("Reducing: " .. tostring(v.timer) .. " >= " .. tostring(reducedTime))
-                -- end
-
-                v.timer = v.timer - reducedTime
-            else
-                AssignJob(k, v.subJobs, v.players[1])
-                table.remove(v.players, 1)
-                v.timer = v.cooldown
+            if #v.players > 0 then
+                if v.timer >= reducedTime then
+                    v.timer = v.timer - reducedTime
+                else
+                    AssignJob(k, v.subJobs, v.players[1])
+                    table.remove(v.players, 1)
+                    v.timer = v.cooldown
+                end
             end
         end
 

@@ -5,11 +5,12 @@ local loggingEnabled = Config.DebugLogs
 local queue = {}
 
 local function IsPlayerInQueue(pSource)
-    for k,v in pairs(queue) do
-        for i=1, #v.players do
+    for _,v in pairs(queue) do
+        for i=1, CountTableElements(v.players) do
             if v.players[i] == pSource then return true end
         end
     end
+
     return false
 end
 
@@ -23,6 +24,7 @@ local function DropFromQueue(pSource)
                     if loggingEnabled then
                         print("Removed player " .. tostring(pSource) .. " from job " .. tostring(k))
                     end
+                    return
                 else
                     table.remove(v.players, i)
 
@@ -34,6 +36,8 @@ local function DropFromQueue(pSource)
                                 if loggingEnabled then
                                     print("Removed player " .. tostring(pSource) .. " from subjob " .. tostring(subK) .. " in job " .. tostring(k))
                                 end
+
+                                return
                             end
                         end
                     end
@@ -194,7 +198,7 @@ QBCore.Functions.CreateCallback('hiype-jobqueue:server:join-queue',function(sour
         if loggingEnabled then print("Player " .. tostring(src) .. " joined queue for job " .. pJobName) end
         if subJobsQueue then
             local subJobKey = AddToSubJob(src, subJobsQueue, pJobName, pSubJobNum, pPreviousSubJob)
-            if subJobKey then
+            if subJobKey ~= nil then
                 if loggingEnabled then print("Player " .. tostring(src) .. " joined queue for sub job " .. subJobKey) end
                 jobQueue.players[#jobQueue.players + 1] = src
                 cb(subJobKey)
@@ -244,7 +248,6 @@ CreateThread(function()
                     v.timer = v.timer - reducedTime
                 else
                     AssignJob(k, v.subJobs, v.players[1])
-                    table.remove(v.players, 1)
                     v.timer = v.cooldown
                 end
             end

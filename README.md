@@ -76,7 +76,7 @@ end
 ```lua
 QBCore.Functions.TriggerCallback('hiype-jobqueue:server:join-queue', function(result)
     print("Received janitor job to: " .. tostring(result))
-end, pJobName)
+end, pJobName, pSubJobNum, pPreviousSubJob)
 ```
 
 ### Parameters
